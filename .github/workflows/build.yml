@@ -31,9 +31,6 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Print Flutter version
-        run: flutter --version
-
       - name: Generate Android platform files
         run: |
           flutter create --platforms=android --org com.galtibook.app --project-name galtibook .
@@ -49,56 +46,31 @@ jobs:
           ]
           path = next((p for p in candidates if os.path.exists(p)), None)
           if path is None:
-              print("ERROR: no android/app build file found")
               sys.exit(1)
 
           with open(path, "r", encoding="utf-8") as f:
               src = f.read()
 
-          if "desugar_jdk_libs" in src:
-              print(f"{path}: desugaring already configured, skipping.")
-              sys.exit(0)
+          if "desugar_jdk_libs" not in src:
+              is_kts = path.endswith(".kts")
+              enable_line = "isCoreLibraryDesugaringEnabled = true" if is_kts else "coreLibraryDesugaringEnabled true"
+              dep_line = 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")' if is_kts else "coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'"
 
-          is_kts = path.endswith(".kts")
+              src, n1 = re.subn(r"(compileOptions\s*\{)", r"\1\n        " + enable_line, src, count=1)
+              if n1 == 0:
+                  sys.exit(1)
 
-          if is_kts:
-              enable_line = "isCoreLibraryDesugaringEnabled = true"
-              dep_line = 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")'
-          else:
-              enable_line = "coreLibraryDesugaringEnabled true"
-              dep_line = "coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'"
+              if re.search(r"dependencies\s*\{", src):
+                  src = re.sub(r"(dependencies\s*\{)", r"\1\n    " + dep_line, src, count=1)
+              else:
+                  src = src.rstrip() + f"\n\ndependencies {{\n    {dep_line}\n}}\n"
 
-          src, n1 = re.subn(
-              r"(compileOptions\s*\{)",
-              r"\1\n        " + enable_line,
-              src,
-              count=1,
-          )
-          if n1 == 0:
-              print(f"ERROR: compileOptions not found in {path}")
-              sys.exit(1)
-
-          if re.search(r"dependencies\s*\{", src):
-              src = re.sub(
-                  r"(dependencies\s*\{)",
-                  r"\1\n    " + dep_line,
-                  src,
-                  count=1,
-              )
-          else:
-              src = src.rstrip() + f"\n\ndependencies {{\n    {dep_line}\n}}\n"
-
-          with open(path, "w", encoding="utf-8") as f:
-              f.write(src)
-
-          print(f"Patched {path} for core library desugaring.")
+              with open(path, "w", encoding="utf-8") as f:
+                  f.write(src)
           EOF
 
       - name: Get dependencies
         run: flutter pub get
-
-      - name: Analyze code
-        run: flutter analyze --no-fatal-infos || true
 
       - name: Build debug APK
         run: flutter build apk --debug

@@ -1,0 +1,51 @@
+Name: galtibook
+description: "GaltiBook - 100% offline Photo-First Mistake Notebook & Spaced Repetition app for Indian competitive exam students."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Local database
+  sqflite: ^2.4.1
+  path: ^1.9.1
+  path_provider: ^2.1.5
+
+  # Photo capture & processing
+  image_picker: ^1.1.2
+  image_cropper: ^8.0.2
+  flutter_image_compress: ^2.3.0
+
+  # Offline reminders
+  flutter_local_notifications: ^17.2.4
+  timezone: ^0.9.4
+  flutter_timezone: ^3.0.1
+
+  # Export, sharing & PDF
+  pdf: ^3.11.1
+  printing: ^5.13.4
+  share_plus: ^10.1.4
+
+  # Preferences, files & archives
+  shared_preferences: ^2.3.2
+  file_picker: ^8.1.2
+  archive: ^3.6.1
+
+  # UI helpers
+  intl: ^0.19.0
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/

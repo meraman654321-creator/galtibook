@@ -13,11 +13,10 @@ dependencies:
   path: ^1.9.1
   path_provider: ^2.1.5
   image_picker: ^1.1.2
-  image_cropper: ^8.0.2
+  crop_your_image: ^2.0.0
   flutter_image_compress: ^2.3.0
   flutter_local_notifications: ^17.2.4
   timezone: ^0.9.4
-  flutter_timezone: ^3.0.1
   pdf: ^3.11.1
   printing: ^5.13.4
   share_plus: ^10.1.4

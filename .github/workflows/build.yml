@@ -1,0 +1,113 @@
+name: Build Debug APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Flutter (stable)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Print Flutter version
+        run: flutter --version
+
+      - name: Generate Android platform files
+        run: |
+          flutter create --platforms=android --org com.galtibook.app --project-name galtibook .
+
+      - name: Enable core library desugaring for Android
+        run: |
+          python3 - <<'EOF'
+          import os, re, sys
+
+          candidates = [
+              "android/app/build.gradle.kts",
+              "android/app/build.gradle",
+          ]
+          path = next((p for p in candidates if os.path.exists(p)), None)
+          if path is None:
+              print("ERROR: no android/app build file found")
+              sys.exit(1)
+
+          with open(path, "r", encoding="utf-8") as f:
+              src = f.read()
+
+          if "desugar_jdk_libs" in src:
+              print(f"{path}: desugaring already configured, skipping.")
+              sys.exit(0)
+
+          is_kts = path.endswith(".kts")
+
+          if is_kts:
+              enable_line = "isCoreLibraryDesugaringEnabled = true"
+              dep_line = 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")'
+          else:
+              enable_line = "coreLibraryDesugaringEnabled true"
+              dep_line = "coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'"
+
+          # 1. Enable desugaring inside the compileOptions block.
+          src, n1 = re.subn(
+              r"(compileOptions\s*\{)",
+              r"\1\n        " + enable_line,
+              src,
+              count=1,
+          )
+
+          # 2. Add the desugaring library to the app's dependencies block.
+          src, n2 = re.subn(
+              r"(dependencies\s*\{)",
+              r"\1\n    " + dep_line,
+              src,
+              count=1,
+          )
+
+          if n1 == 0 or n2 == 0:
+              print(f"ERROR: could not patch {path} (compileOptions={n1}, dependencies={n2})")
+              sys.exit(1)
+
+          with open(path, "w", encoding="utf-8") as f:
+              f.write(src)
+
+          print(f"Patched {path} for core library desugaring.")
+          EOF
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Analyze code
+        run: flutter analyze --no-fatal-infos || true
+
+      - name: Build debug APK
+        run: flutter build apk --debug
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: galtibook-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 14
+          

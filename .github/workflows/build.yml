@@ -74,17 +74,19 @@ jobs:
               src,
               count=1,
           )
-
-          src, n2 = re.subn(
-              r"(dependencies\s*\{)",
-              r"\1\n    " + dep_line,
-              src,
-              count=1,
-          )
-
-          if n1 == 0 or n2 == 0:
-              print(f"ERROR: could not patch {path} (compileOptions={n1}, dependencies={n2})")
+          if n1 == 0:
+              print(f"ERROR: compileOptions not found in {path}")
               sys.exit(1)
+
+          if re.search(r"dependencies\s*\{", src):
+              src = re.sub(
+                  r"(dependencies\s*\{)",
+                  r"\1\n    " + dep_line,
+                  src,
+                  count=1,
+              )
+          else:
+              src = src.rstrip() + f"\n\ndependencies {{\n    {dep_line}\n}}\n"
 
           with open(path, "w", encoding="utf-8") as f:
               f.write(src)

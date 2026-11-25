@@ -1,19 +1,25 @@
 {
   "name": "GaltiBook - Offline Mistake Notebook",
   "short_name": "GaltiBook",
-  "description": "100% offline Photo-First Mistake Notebook & Spaced Repetition app for competitive exam students.",
-  "start_url": "/galtibook/",
-  "scope": "/galtibook/",
+  "description": "100% offline Photo-First Mistake Notebook and Spaced Repetition revision app for competitive exam students.",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f3f2ee",
   "theme_color": "#4f3cf0",
   "icons": [
     {
-      "src": "icon.svg",
+      "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
